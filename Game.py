@@ -3,6 +3,11 @@ from random import random, randint
 
 class Game(object):
 
+    left = (-1, 0)
+    right = (1, 0)
+    up = (0, 1)
+    down = (0, -1)
+
     # size 为盘面大小，alpha 为每次出现 4 作为块的概率
     def __init__(self, size=4, alpha=0.1):
         self.size = size
@@ -62,10 +67,12 @@ class Game(object):
                 if row[curr] == row[curr - 1]:
                     row[curr] *= 2
                     pay += row[curr]
+                    row[curr - 1] = 0
                     changed = True
                 else:
                     changed = False
                 curr -= 1
+        self._add_new_block()
         return (pay, self._end())
 
 
@@ -75,7 +82,7 @@ class Game(object):
         count = 0
         for i in range(end_index, -1, -1):
             if row[i] != 0:
-                row[end_index - count], row[i] = row[i], row[end_index - i]
+                row[end_index - count], row[i] = row[i], row[end_index - count]
                 count += 1
 
 
@@ -169,7 +176,5 @@ class Game(object):
         return s
 
 
-if __name__ == "__main__":
-    g = Game()
-    g.new_game()
-    print g
+    def __call__(self, direction):
+        return self.move(direction)
