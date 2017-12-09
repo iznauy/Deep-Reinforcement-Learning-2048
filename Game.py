@@ -12,7 +12,12 @@ class Game(object):
 
     # 初始化一个全部为0的board
     def _new_board(self):
-        self.game_board = [[0] * self.size] * self.size
+        self.game_board = []
+        for i in range(self.size):
+            row = []
+            for j in range(self.size):
+                row.append(0)
+            self.game_board.append(row)
 
 
     # 向board里面加入两块
@@ -39,7 +44,7 @@ class Game(object):
     # 向左移动
     def _left(self):
         self._reverse()
-        result = self._left()
+        result = self._right()
         self._reverse()
         return result
 
@@ -78,7 +83,7 @@ class Game(object):
     def _up(self):
         self._transpose()
         self._reverse()
-        result = self._left()
+        result = self._right()
         self._reverse()
         self._transpose()
         return result
@@ -87,7 +92,7 @@ class Game(object):
     # 向下移动
     def _down(self):
         self._transpose()
-        result = self._left()
+        result = self._right()
         self._transpose()
         return result
 
@@ -155,3 +160,16 @@ class Game(object):
         assert alpha > 0 and alpha < 1
         return 4 if random() < alpha else 2
 
+
+    def __str__(self):
+        s = ""
+        for row in self.game_board:
+            s += str(row)
+            s += "\n"
+        return s
+
+
+if __name__ == "__main__":
+    g = Game()
+    g.new_game()
+    print g
