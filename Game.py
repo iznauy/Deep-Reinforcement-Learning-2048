@@ -15,6 +15,7 @@ class Game(object):
         self.size = size
         self.alpha = alpha
         self.game_board = None
+        self.max = 2
 
 
     # 初始化一个全部为0的board
@@ -58,7 +59,7 @@ class Game(object):
 
     # 向右移动
     def _right(self):
-        pay = 0
+        pay = -2
         temp_board = copy.deepcopy(self.game_board)
         for row in self.game_board:
             curr, changed = self.size - 1, True
@@ -69,7 +70,9 @@ class Game(object):
                     break
                 if row[curr] == row[curr - 1]:
                     row[curr] *= 2
-                    pay += row[curr]
+                    if row[curr] > self.max:
+                        max = row[curr]
+                        pay = max
                     row[curr - 1] = 0
                     changed = True
                 else:
@@ -77,7 +80,9 @@ class Game(object):
                 curr -= 1
         if temp_board != self.game_board:
             self._add_new_block()
-        return (pay - 10, self._end())
+        else:
+            pay = -1
+        return (pay, self._end())
 
 
     # 把所有的非零元素移动到end_index为结束的坑中
@@ -131,8 +136,12 @@ class Game(object):
                     return False
         #是否存在可消除的情况
         for i in range(self.size - 1):
+            for j in range(self.size):
+                if self.game_board[i][j] == self.game_board[i + 1][j]:
+                    return False
+        for i in range(self.size):
             for j in range(self.size - 1):
-                if self.game_board[i][j] == self.game_board[i + 1][j] or self.game_board[i][j] == self.game_board[i][j + 1]:
+                if self.game_board[i][j] == self.game_board[i][j + 1]:
                     return False
         # 无法继续进行游戏
         return True
@@ -142,6 +151,7 @@ class Game(object):
     def new_game(self):
         self._new_board()
         self._init_board()
+        self.max = 2
 
 
     # 返回当前盘面的最大值
@@ -192,3 +202,9 @@ class Game(object):
 
     def get_state(self):
         return np.array(self.game_board).reshape((1, 4, 4))
+
+
+    def get_preprocessed_state(self):
+        raw =  np.array(self.game_board).reshape((1, 4, 4)).astype(float)
+        raw[raw > 0] = np.log2(raw[raw > 0])
+        return raw

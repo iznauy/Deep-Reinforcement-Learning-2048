@@ -3,18 +3,18 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
-import torch.nn.init as init
 from Game import Game
+import matplotlib.pyplot as plt
 
 batch_size = 32
 lr = 1e-2
 epsilon = 0.9
 gamma = 0.99
 target_replace_iter = 100
-memory_capacity = 2000
+memory_capacity = 10000
 state_size = 16
 shape = (1, 4, 4)
-epoch = 1000
+epoch = 300
 batch_shape = (batch_size, 1, 4, 4)
 
 class Net(nn.Module):
@@ -30,6 +30,10 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(400, 50)
         self.fc3 = nn.Linear(50, output_size)
         self.fc0 = nn.ConvTranspose2d(self.input_size[0], 3, kernel_size=2, stride=2)
+        for module in self.modules():
+            if isinstance(module, nn.Linear):
+                nn.init.normal(module.weight.data, 0, 0.1)
+                nn.init.constant(module.bias.data, 0)
 
 
     def forward(self, input_vector):
@@ -97,35 +101,28 @@ class QN_2048(object):
         self.optimizer.step()
 
 
-def main():
+def train():
     qn = QN_2048(Game.get_actions())
     game = Game()
-    game.new_game()
-    count = 0
-    scores = []
-    score = 0
-    while qn.learn_step_counter < 100000:
-        count += 1
-        if count % 1000 == 0:
-            print count
-            print game
-        if game._end():
-            scores.append(score)
-            score = 0
-            game.new_game()
-        if game.get_max() > 500:
-            print "Bigger than 500!"
-        state = torch.FloatTensor(game.get_state())
-        action_index, action = qn.choose_action(state)
-        pay, _ = game.move(action)
-        score += (pay + 10)
-        qn.store_transition(state.numpy(), action_index, pay, game.get_state())
-        if qn.memory_counter > memory_capacity:
-            qn.learn()
+    upper_bound = []
+    for i in range(epoch):
+        game.new_game()
+        while True:
+            state = torch.FloatTensor(game.get_preprocessed_state())
+            action_index, action = qn.choose_action(state)
+            pay, result = game.move(action)
+            qn.store_transition(state.numpy(), action_index, pay, game.get_preprocessed_state())
+            if qn.memory_counter > memory_capacity:
+                qn.learn()
+            if result == True:
+                upper_bound.append(game.get_max())
+                break
+        print "In epoch", i, ", max_block =", upper_bound[-1]
+        print game
+    plt.plot(upper_bound)
+    plt.show()
 
-    print "Count: ", len(scores)
-    print scores
 
 
 if __name__ == "__main__":
-    main()
+    train()
