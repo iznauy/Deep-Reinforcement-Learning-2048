@@ -1,5 +1,7 @@
 # coding=utf-8
 from random import random, randint
+import numpy as np
+import copy
 
 class Game(object):
 
@@ -57,6 +59,7 @@ class Game(object):
     # 向右移动
     def _right(self):
         pay = 0
+        temp_board = copy.deepcopy(self.game_board)
         for row in self.game_board:
             curr, changed = self.size - 1, True
             while True:
@@ -72,8 +75,9 @@ class Game(object):
                 else:
                     changed = False
                 curr -= 1
-        self._add_new_block()
-        return (pay, self._end())
+        if temp_board != self.game_board:
+            self._add_new_block()
+        return (pay - 10, self._end())
 
 
     # 把所有的非零元素移动到end_index为结束的坑中
@@ -178,3 +182,13 @@ class Game(object):
 
     def __call__(self, direction):
         return self.move(direction)
+
+
+    # 获取所有可行的行动
+    @staticmethod
+    def get_actions():
+        return (Game.left, Game.right, Game.up, Game.down)
+
+
+    def get_state(self):
+        return np.array(self.game_board).reshape((1, 4, 4))
